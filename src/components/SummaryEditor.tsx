@@ -2,11 +2,6 @@
 
 import React from 'react';
 
-interface SummaryEditorProps {
-  summary: string;
-  setSummary: (summary: string) => void;
-  isLoading: boolean;
-}
 
 interface SummaryEditorProps {
   summary: string;
