@@ -1,103 +1,179 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
+import TranscriptUpload from '@/components/TranscriptUpload';
+import PromptInput from '@/components/PromptInput';
+import SummaryEditor from '@/components/SummaryEditor';
+import EmailShare from '@/components/EmailShare';
+import ExportButtons from '@/components/ExportButtons';
+import ModelSelector from '@/components/ModelSelector';
+import TroubleshootingPanel from '@/components/TroubleshootingPanel';
+import { groqModels } from '@/lib/models';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { data: session } = useSession();
+  
+  const [transcript, setTranscript] = useState('');
+  const [prompt, setPrompt] = useState('Summarize this meeting in bullet points, highlighting key decisions and action items.');
+  const [summary, setSummary] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  
+  // Model selection
+  const [provider, setProvider] = useState<'groq' | 'openai'>('groq');
+  const [modelId, setModelId] = useState(groqModels[0].id);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleGenerateSummary = async () => {
+    if (!transcript.trim()) {
+      toast.error('Please provide a transcript first');
+      return;
+    }
+    
+    setIsLoading(true);
+    setErrorMessage(null);
+    
+    try {
+      const response = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transcript,
+          prompt,
+          provider,
+          model: modelId
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate summary');
+      }
+      
+      setSummary(data.summary);
+      toast.success('Summary generated successfully!');
+      
+      // Save to database if logged in
+      if (session?.user) {
+        try {
+          await fetch('/api/summaries', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              transcript,
+              prompt,
+              summary: data.summary,
+            }),
+          });
+        } catch (error) {
+          console.error('Error saving summary:', error);
+          // Don't show error to user as this is a background operation
+        }
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      const message = error instanceof Error ? error.message : 'Failed to generate summary';
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleShareComplete = (success: boolean, message: string) => {
+    if (success) {
+      toast.success(message);
+    } else {
+      toast.error(message);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">AI Meeting Notes Summarizer</h1>
+        <p className="text-gray-600">
+          Upload or paste your meeting transcript, customize the prompt, and generate an AI-powered summary.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg text-black shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">1. Upload Transcript</h2>
+            <TranscriptUpload transcript={transcript} setTranscript={setTranscript} />
+          </div>
+
+          <div className="bg-white rounded-lg text-black shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">2. Customize AI Instructions</h2>
+            <PromptInput prompt={prompt} setPrompt={setPrompt} />
+            
+            <div className="mt-4">
+              <ModelSelector 
+                provider={provider}
+                setProvider={setProvider}
+                modelId={modelId}
+                setModelId={setModelId}
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleGenerateSummary}
+            disabled={isLoading || !transcript.trim()}
+            className={`w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
+              isLoading || !transcript.trim()
+                ? 'bg-blue-300 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {isLoading ? 'Generating...' : 'Generate Summary'}
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg text-black shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">3. Edit & Export Summary</h2>
+            <SummaryEditor 
+              summary={summary} 
+              setSummary={setSummary} 
+              isLoading={isLoading}
+              errorMessage={errorMessage} 
+            />
+            
+            {summary && !isLoading && !errorMessage && (
+              <div className="mt-4">
+                <ExportButtons 
+                  summary={summary} 
+                  onCopySuccess={() => toast.success('Copied to clipboard!')} 
+                />
+              </div>
+            )}
+          </div>
+
+          {summary && !isLoading && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-black mb-4">4. Share Summary</h2>
+              <EmailShare
+                summary={summary}
+                onShareComplete={handleShareComplete}
+                isSharing={isSharing}
+                setIsSharing={setIsSharing}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {errorMessage && <TroubleshootingPanel />}
     </div>
   );
 }
