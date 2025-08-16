@@ -40,7 +40,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 1. Clone the repository:
    ```bash
-   git clone https://your-repository-url/ai-meeting-summarizer.git
+   git clone https://tharunrega/AI-Powered-Meeting-Notes-Summarizer-and-Sharer.git
    cd ai-meeting-summarizer
    ```
 
