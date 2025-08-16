@@ -64,11 +64,22 @@ export async function sendEmail({
         });
         
         return { success: true, message: 'Email sent successfully with SendGrid' };
-      } catch (sgError: any) {
-        console.error('SendGrid error:', sgError);
+      } catch (error: unknown) {
+        console.error('SendGrid error:', error);
         
         // Return the specific SendGrid error for better debugging
-        const errorMessage = sgError.response?.body?.errors?.[0]?.message || sgError.message;
+        let errorMessage = 'Unknown error';
+        
+        // Type guard for SendGrid errors
+        if (error && typeof error === 'object' && 'response' in error) {
+          const sgError = error as { 
+            response?: { body?: { errors?: { message: string }[] } };
+            message?: string;
+          };
+          errorMessage = sgError.response?.body?.errors?.[0]?.message || sgError.message || errorMessage;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
         return { success: false, message: `SendGrid error: ${errorMessage}` };
       }
     }
@@ -90,17 +101,23 @@ export async function sendEmail({
         });
         
         return { success: true, message: `Email sent successfully with Nodemailer: ${info.messageId}` };
-      } catch (nmError: any) {
-        console.error('Nodemailer error:', nmError);
+      } catch (error: unknown) {
+        console.error('Nodemailer error:', error);
         
         // Return more specific nodemailer error messages
         let errorMsg = 'Nodemailer error';
-        if (nmError.code === 'EAUTH') {
-          errorMsg = 'Authentication failed. Please check your email/password.';
-        } else if (nmError.code === 'ESOCKET' || nmError.code === 'ECONNECTION') {
-          errorMsg = 'Connection to mail server failed. Please check your network or server settings.';
-        } else {
-          errorMsg = nmError.message;
+        
+        // Type guard for Nodemailer errors
+        if (error && typeof error === 'object') {
+          const nmError = error as { code?: string; message?: string };
+          
+          if (nmError.code === 'EAUTH') {
+            errorMsg = 'Authentication failed. Please check your email/password.';
+          } else if (nmError.code === 'ESOCKET' || nmError.code === 'ECONNECTION') {
+            errorMsg = 'Connection to mail server failed. Please check your network or server settings.';
+          } else if (nmError.message) {
+            errorMsg = nmError.message;
+          }
         }
         
         return { success: false, message: errorMsg };
@@ -120,11 +137,20 @@ export async function sendEmail({
       success: false,
       message: 'No email service is configured. Please check your environment variables: SENDGRID_API_KEY or EMAIL_USER/EMAIL_PASSWORD.' 
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Unexpected error sending email:', error);
+    
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      const err = error as { message?: string };
+      errorMessage = err.message || errorMessage;
+    }
+    
     return { 
       success: false, 
-      message: `Failed to send email: ${error.message || 'Unknown error'}` 
+      message: `Failed to send email: ${errorMessage}` 
     };
   }
 }

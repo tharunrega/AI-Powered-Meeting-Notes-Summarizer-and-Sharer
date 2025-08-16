@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { saveSummary, getUserSummaries } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET(_: NextRequest) {
   try {
     const session = await getServerSession();
     

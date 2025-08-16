@@ -5,7 +5,17 @@ import { useState } from 'react';
 export default function EmailTroubleshooter() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<{
+    success?: boolean;
+    message?: string;
+    error?: string;
+    provider?: string;
+    details?: {
+      sendGridConfigured?: boolean;
+      nodemailerConfigured?: boolean;
+      fromEmailConfigured?: boolean;
+    };
+  } | null>(null);
   const [testEmail, setTestEmail] = useState('');
 
   const handleTestEmail = async () => {
@@ -16,7 +26,7 @@ export default function EmailTroubleshooter() {
       const response = await fetch(`/api/test-email?email=${encodeURIComponent(testEmail)}`);
       const data = await response.json();
       setTestResult(data);
-    } catch (error) {
+    } catch (_) {
       setTestResult({ error: 'Failed to run test' });
     } finally {
       setIsLoading(false);

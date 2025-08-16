@@ -8,7 +8,7 @@ import { SummaryWithId } from '@/lib/db';
 import ExportButtons from '@/components/ExportButtons';
 
 export default function HistoryPage() {
-  const { data: session, status } = useSession();
+  const { data: _, status } = useSession();
   const [summaries, setSummaries] = useState<SummaryWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -74,7 +74,7 @@ export default function HistoryPage() {
       
       {summaries.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-          <p className="text-gray-500 mb-4">You haven't created any summaries yet.</p>
+          <p className="text-gray-500 mb-4">You haven&apos;t created any summaries yet.</p>
           <Link
             href="/"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"

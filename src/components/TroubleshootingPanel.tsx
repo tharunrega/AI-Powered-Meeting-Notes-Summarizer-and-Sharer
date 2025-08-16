@@ -5,7 +5,10 @@ import toast from 'react-hot-toast';
 
 export default function TroubleshootingPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [healthStatus, setHealthStatus] = useState<{
+    envVarsSet: { groqApiKey: boolean; openaiApiKey: boolean };
+    apiKeys: { groq: string; openai: string };
+  } | null>(null);
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   
   const checkApiHealth = async () => {
@@ -52,7 +55,7 @@ export default function TroubleshootingPanel() {
             <div>
               <h4 className="font-medium text-sm">API Key Errors</h4>
               <p className="text-sm text-gray-600 mt-1">
-                If you see "Invalid API key" errors, make sure you've:
+                If you see &quot;Invalid API key&quot; errors, make sure you&apos;ve:
               </p>
               <ul className="list-disc pl-5 text-sm text-gray-600 mt-1">
                 <li>Added your actual Groq and OpenAI API keys to the .env.local file</li>
@@ -70,12 +73,12 @@ export default function TroubleshootingPanel() {
             <div>
               <h4 className="font-medium text-sm">Text Not Appearing</h4>
               <p className="text-sm text-gray-600 mt-1">
-                If generated text isn't showing up:
+                If generated text isn&apos;t showing up:
               </p>
               <ul className="list-disc pl-5 text-sm text-gray-600 mt-1">
                 <li>Check browser console for JavaScript errors</li>
                 <li>Try a different AI provider (toggle between Groq and OpenAI)</li>
-                <li>Verify that you're using a transcript with enough content</li>
+                <li>Verify that you&apos;re using a transcript with enough content</li>
                 <li>Check your network connection</li>
               </ul>
             </div>

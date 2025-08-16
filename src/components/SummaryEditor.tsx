@@ -44,7 +44,7 @@ export default function SummaryEditor({ summary, setSummary, isLoading, errorMes
             </div>
             <div className="w-full border-t border-red-200 pt-4 mt-4">
               <p className="text-sm text-red-600">
-                If you're seeing API key errors, please make sure you've added valid API keys to your .env.local file and restarted the server.
+                If you&apos;re seeing API key errors, please make sure you&apos;ve added valid API keys to your .env.local file and restarted the server.
               </p>
             </div>
           </div>

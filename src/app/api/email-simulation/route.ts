@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import EmailSimulation from '@/components/EmailSimulation';
 
 export async function POST(request: NextRequest) {
   try {

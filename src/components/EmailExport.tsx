@@ -373,7 +373,7 @@ export default function EmailExport({ recipients, subject, summary }: EmailExpor
             <div className="text-xs text-gray-500 mt-2">
               <p>
                 Files will be downloaded to your device.
-                You can also use the "Open in Mail" option to open your default email client.
+                You can also use the &quot;Open in Mail&quot; option to open your default email client.
               </p>
             </div>
           )}
